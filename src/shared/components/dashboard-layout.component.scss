@@ -1,0 +1,28 @@
+// Dashboard layout component styles
+// Most styling is handled by Tailwind CSS classes in the template
+
+// Smooth transitions for layout changes
+.lg\:pl-64 {
+  transition: padding-left 0.3s ease-in-out;
+}
+
+// Ensure proper z-index stacking
+.sidebar {
+  z-index: 40;
+}
+
+.navbar {
+  z-index: 50;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 1023px) {
+  .lg\:pl-64 {
+    padding-left: 0;
+  }
+}
+
+// Prevent content shift when sidebar toggles
+main {
+  min-height: calc(100vh - 4rem); // Account for navbar height
+}

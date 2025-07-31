@@ -1,0 +1,35 @@
+// Navbar component styles
+// Most styling is handled by Tailwind CSS classes in the template
+
+// Animation for dropdown menu
+@keyframes slide-in-from-top {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-duration: 0.15s;
+  animation-fill-mode: both;
+}
+
+.slide-in-from-top-2 {
+  animation-name: slide-in-from-top;
+}
+
+// Custom focus styles for search input
+input[type="search"]:focus {
+  outline: none;
+}
+
+// Backdrop blur support
+@supports (backdrop-filter: blur(8px)) {
+  .backdrop-blur {
+    backdrop-filter: blur(8px);
+  }
+}
