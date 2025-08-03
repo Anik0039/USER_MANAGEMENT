@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Plus, Search, Filter } from 'lucide-angular';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule, Plus, Search, Filter, X, Upload, User } from 'lucide-angular';
 import { ButtonComponent } from '../../shared/components/button.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ButtonComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ButtonComponent],
   template: `
     <div class="space-y-6">
       <!-- Page header -->
@@ -17,7 +18,7 @@ import { ButtonComponent } from '../../shared/components/button.component';
             Manage your user accounts and permissions.
           </p>
         </div>
-        <app-button>
+        <app-button (click)="openUserForm()">
           <lucide-angular [img]="plusIcon" class="mr-2 h-4 w-4"></lucide-angular>
           Add User
         </app-button>
@@ -45,8 +46,15 @@ import { ButtonComponent } from '../../shared/components/button.component';
           <table class="w-full">
             <thead>
               <tr class="border-b bg-muted/50">
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Picture</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">User ID</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">First Name</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Middle Name</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last Name</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date of Birth</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Contact No</th>
                 <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
+                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Address</th>
                 <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Role</th>
                 <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
                 <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Joined</th>
@@ -56,29 +64,30 @@ import { ButtonComponent } from '../../shared/components/button.component';
             <tbody>
               <tr *ngFor="let user of users" class="border-b transition-colors hover:bg-muted/50">
                 <td class="p-4 align-middle">
-                  <div class="flex items-center space-x-3">
-                    <div class="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                      <span class="text-sm font-medium">{{ user.initials }}</span>
-                    </div>
-                    <div>
-                      <div class="font-medium">{{ user.name }}</div>
-                    </div>
+                  <div class="flex items-center justify-center">
+                    <img *ngIf="user.picture" [src]="user.picture" class="h-10 w-10 object-cover rounded-full" alt="Profile" />
+                    <span *ngIf="!user.picture" class="h-10 w-10 rounded-full bg-muted flex items-center justify-center">{{ user.initials }}</span>
                   </div>
                 </td>
-                <td class="p-4 align-middle text-muted-foreground">{{ user.email }}</td>
+                <td class="p-4 align-middle">{{ user.userId || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.firstName || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.middleName || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.lastName || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.dateOfBirth || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.contactNo || '-' }}</td>
+                <td class="p-4 align-middle text-muted-foreground">{{ user.email || '-' }}</td>
+                <td class="p-4 align-middle">{{ user.address || '-' }}</td>
                 <td class="p-4 align-middle">
-                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" 
-                        [ngClass]="getRoleBadgeClass(user.role)">
-                    {{ user.role }}
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [ngClass]="getRoleBadgeClass(user.role)">
+                    {{ user.role || '-' }}
                   </span>
                 </td>
                 <td class="p-4 align-middle">
-                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
-                        [ngClass]="getStatusBadgeClass(user.status)">
-                    {{ user.status }}
+                  <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [ngClass]="getStatusBadgeClass(user.status)">
+                    {{ user.status || '-' }}
                   </span>
                 </td>
-                <td class="p-4 align-middle text-muted-foreground">{{ user.joinedDate }}</td>
+                <td class="p-4 align-middle text-muted-foreground">{{ user.joinedDate || '-' }}</td>
                 <td class="p-4 align-middle">
                   <div class="flex items-center space-x-2">
                     <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8">
@@ -94,6 +103,214 @@ import { ButtonComponent } from '../../shared/components/button.component';
           </table>
         </div>
       </div>
+
+      <!-- User Creation Form Modal -->
+      <div *ngIf="showUserForm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="bg-background rounded-lg shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between p-6 border-b">
+            <div>
+              <h2 class="text-xl font-semibold">Create New User Profile</h2>
+              <p class="text-sm text-muted-foreground mt-1">Fill in the details below to create a new user account.</p>
+            </div>
+            <button (click)="closeUserForm()" class="rounded-md p-2 hover:bg-accent">
+              <lucide-angular [img]="closeIcon" class="h-4 w-4"></lucide-angular>
+            </button>
+          </div>
+
+          <!-- Modal Body -->
+          <div class="p-6 space-y-6">
+            <!-- Profile Picture Section -->
+            <div class="flex flex-col items-center space-y-4">
+              <div class="text-center">
+                <h3 class="font-medium">Profile Picture</h3>
+                <p class="text-sm text-muted-foreground">Upload a picture for the user profile.</p>
+              </div>
+              <div class="flex flex-col items-center space-y-3">
+                <div class="w-20 h-20 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center bg-muted/10">
+                  <img *ngIf="newUser.picture" [src]="newUser.picture" class="h-20 w-20 object-cover rounded-lg" alt="Profile Picture" />
+                  <lucide-angular *ngIf="!newUser.picture" [img]="userIcon" class="h-8 w-8 text-muted-foreground"></lucide-angular>
+                </div>
+                <input type="file" accept="image/*" (change)="onPictureSelected($event)" class="hidden" #fileInput />
+                <button class="inline-flex items-center px-3 py-2 text-sm border border-input rounded-md hover:bg-accent" (click)="fileInput.click()">
+                  <lucide-angular [img]="uploadIcon" class="mr-2 h-4 w-4"></lucide-angular>
+                  Upload Image
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <!-- User ID -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="userId">User ID</label>
+                <input
+                  id="userId"
+                  type="text"
+                  [(ngModel)]="newUser.userId"
+                  placeholder="e.g., @jeffsdeposit"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- First Name -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="firstName">First Name</label>
+                <input
+                  id="firstName"
+                  type="text"
+                  [(ngModel)]="newUser.firstName"
+                  placeholder="e.g., John"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Middle Name -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="middleName">Middle Name</label>
+                <input
+                  id="middleName"
+                  type="text"
+                  [(ngModel)]="newUser.middleName"
+                  placeholder="e.g., A."
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Last Name -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="lastName">Last Name</label>
+                <input
+                  id="lastName"
+                  type="text"
+                  [(ngModel)]="newUser.lastName"
+                  placeholder="e.g., Doe"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Date of Birth -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="dateOfBirth">Date of Birth</label>
+                <input
+                  id="dateOfBirth"
+                  type="date"
+                  [(ngModel)]="newUser.dateOfBirth"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Contact Number -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="contactNo">Contact Number</label>
+                <input
+                  id="contactNo"
+                  type="text"
+                  [(ngModel)]="newUser.contactNo"
+                  placeholder="e.g., +1234567890"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Email Address -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="email">Email Address</label>
+                <input
+                  id="email"
+                  type="email"
+                  [(ngModel)]="newUser.email"
+                  placeholder="e.g., user@example.com"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Address -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-medium" for="address">Address</label>
+                <input
+                  id="address"
+                  type="text"
+                  [(ngModel)]="newUser.address"
+                  placeholder="e.g., 123 Main St, City, Country"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Password -->
+              <div class="space-y-2 md:col-span-2">
+                <label class="text-sm font-medium" for="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  [(ngModel)]="newUser.password"
+                  placeholder="Enter a secure password"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+              </div>
+
+              <!-- Role -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="role">Role</label>
+                <select
+                  id="role"
+                  [(ngModel)]="newUser.role"
+                  class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  <option value="">Select a role</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Moderator">Moderator</option>
+                  <option value="User">User</option>
+                </select>
+              </div>
+
+              <!-- Account Status -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium" for="status-active">Account Status</label>
+                <div class="flex space-x-4">
+                  <label class="flex items-center space-x-2 cursor-pointer" for="status-active">
+                    <input
+                      id="status-active"
+                      type="radio"
+                      name="status"
+                      value="Active"
+                      [(ngModel)]="newUser.status"
+                      class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <span class="px-3 py-1 text-xs font-medium bg-black text-white rounded">Active</span>
+                  </label>
+                  <label class="flex items-center space-x-2 cursor-pointer" for="status-inactive">
+                    <input
+                      id="status-inactive"
+                      type="radio"
+                      name="status"
+                      value="Inactive"
+                      [(ngModel)]="newUser.status"
+                      class="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
+                    />
+                    <span class="px-3 py-1 text-xs font-medium bg-gray-200 text-gray-700 rounded">Inactive</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="flex items-center justify-end space-x-3 p-6 border-t">
+            <button
+              (click)="closeUserForm()"
+              class="px-4 py-2 text-sm font-medium border border-input rounded-md hover:bg-accent"
+            >
+              Cancel
+            </button>
+            <button
+              (click)="saveUser()"
+              class="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            >
+              Create User
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styleUrl: './users.component.scss'
@@ -102,44 +319,103 @@ export class UsersComponent {
   plusIcon = Plus;
   searchIcon = Search;
   filterIcon = Filter;
+  closeIcon = X;
+  uploadIcon = Upload;
+  userIcon = User;
+
+  showUserForm = false;
+  newUser = {
+    picture: '',
+    userId: '',
+    firstName: '',
+    middleName: '',
+    lastName: '',
+    dateOfBirth: '',
+    contactNo: '',
+    email: '',
+    address: '',
+    password: '',
+    role: '',
+    status: 'Active'
+  };
 
   users = [
     {
-      name: 'Alice Johnson',
+      picture: '',
+      userId: 'alicej',
+      firstName: 'Alice',
+      middleName: '',
+      lastName: 'Johnson',
+      dateOfBirth: '',
+      contactNo: '',
       email: 'alice@example.com',
+      address: '',
       initials: 'AJ',
+      name: 'Alice Johnson',
       role: 'Admin',
       status: 'Active',
       joinedDate: 'Jan 15, 2024'
     },
     {
-      name: 'Bob Smith',
+      picture: '',
+      userId: 'bobsmith',
+      firstName: 'Bob',
+      middleName: '',
+      lastName: 'Smith',
+      dateOfBirth: '',
+      contactNo: '',
       email: 'bob@example.com',
+      address: '',
       initials: 'BS',
+      name: 'Bob Smith',
       role: 'User',
       status: 'Active',
       joinedDate: 'Jan 12, 2024'
     },
     {
-      name: 'Carol Davis',
+      picture: '',
+      userId: 'carold',
+      firstName: 'Carol',
+      middleName: '',
+      lastName: 'Davis',
+      dateOfBirth: '',
+      contactNo: '',
       email: 'carol@example.com',
+      address: '',
       initials: 'CD',
+      name: 'Carol Davis',
       role: 'Moderator',
       status: 'Inactive',
       joinedDate: 'Jan 10, 2024'
     },
     {
-      name: 'David Wilson',
+      picture: '',
+      userId: 'davidw',
+      firstName: 'David',
+      middleName: '',
+      lastName: 'Wilson',
+      dateOfBirth: '',
+      contactNo: '',
       email: 'david@example.com',
+      address: '',
       initials: 'DW',
+      name: 'David Wilson',
       role: 'User',
       status: 'Active',
       joinedDate: 'Jan 8, 2024'
     },
     {
-      name: 'Eva Brown',
+      picture: '',
+      userId: 'evab',
+      firstName: 'Eva',
+      middleName: '',
+      lastName: 'Brown',
+      dateOfBirth: '',
+      contactNo: '',
       email: 'eva@example.com',
+      address: '',
       initials: 'EB',
+      name: 'Eva Brown',
       role: 'User',
       status: 'Pending',
       joinedDate: 'Jan 5, 2024'
@@ -170,5 +446,90 @@ export class UsersComponent {
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
+  }
+
+  openUserForm(): void {
+    this.showUserForm = true;
+    this.resetForm();
+  }
+
+  closeUserForm(): void {
+    this.showUserForm = false;
+    this.resetForm();
+  }
+
+  resetForm(): void {
+    this.newUser = {
+      picture: '',
+      userId: '',
+      firstName: '',
+      middleName: '',
+      lastName: '',
+      dateOfBirth: '',
+      contactNo: '',
+      email: '',
+      address: '',
+      password: '',
+      role: '',
+      status: 'Active'
+    };
+  }
+
+  onPictureSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files && input.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target && e.target.result;
+        this.newUser.picture = typeof result === 'string' ? result : '';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  saveUser(): void {
+    if (this.isFormValid()) {
+      // Generate initials from firstName, middleName, lastName
+      const initials = [this.newUser.firstName, this.newUser.middleName, this.newUser.lastName]
+        .filter(Boolean)
+        .map(word => word.charAt(0).toUpperCase())
+        .join('')
+        .substring(0, 2);
+
+      // Add new user to the users array
+      const newUserEntry = {
+        picture: this.newUser.picture,
+        userId: this.newUser.userId,
+        firstName: this.newUser.firstName,
+        middleName: this.newUser.middleName,
+        lastName: this.newUser.lastName,
+        dateOfBirth: this.newUser.dateOfBirth,
+        contactNo: this.newUser.contactNo,
+        email: this.newUser.email,
+        address: this.newUser.address,
+        initials: initials,
+        name: `${this.newUser.firstName} ${this.newUser.middleName ? this.newUser.middleName + ' ' : ''}${this.newUser.lastName}`.trim(),
+        role: this.newUser.role,
+        status: this.newUser.status,
+        joinedDate: new Date().toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        })
+      };
+
+      this.users.unshift(newUserEntry); // Add to beginning of array
+      this.closeUserForm();
+    }
+  }
+
+  isFormValid(): boolean {
+    return !!(this.newUser.userId &&
+             this.newUser.firstName &&
+             this.newUser.lastName &&
+             this.newUser.email &&
+             this.newUser.role &&
+             this.newUser.status);
   }
 }
