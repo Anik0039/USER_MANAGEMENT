@@ -1,13 +1,16 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Settings, User, Shield, Bell, Palette, Database } from 'lucide-angular';
+import { FormsModule } from '@angular/forms';
+import { LucideAngularModule, Settings, User, Shield, Bell, Palette, Database, Eye, EyeOff, Check, X } from 'lucide-angular';
 import { ButtonComponent } from '../../shared/components/button.component';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle.component';
+import { AuthService, User as AuthUser } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ButtonComponent, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule, LucideAngularModule, ButtonComponent, ThemeToggleComponent],
   template: `
     <div class="space-y-6">
       <!-- Page header -->
@@ -35,16 +38,24 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle.compo
           <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
               <label class="text-sm font-medium">Full Name</label>
-              <input type="text" value="John Doe" class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+              <input 
+                type="text" 
+                [(ngModel)]="profileData.name" 
+                class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" 
+              />
             </div>
             <div class="space-y-2">
               <label class="text-sm font-medium">Email</label>
-              <input type="email" value="john&#64;example.com" class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+              <input 
+                type="email" 
+                [(ngModel)]="profileData.email" 
+                class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" 
+              />
             </div>
           </div>
           
           <div class="mt-4 flex justify-end">
-            <app-button>Save Changes</app-button>
+            <app-button (click)="saveProfileSettings()">Save Changes</app-button>
           </div>
         </div>
 
@@ -71,14 +82,120 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle.compo
               </button>
             </div>
             
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-medium">Change Password</h4>
-                <p class="text-sm text-muted-foreground">Update your account password</p>
+            <div class="space-y-4">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-medium">Change Password</h4>
+                  <p class="text-sm text-muted-foreground">Update your account password</p>
+                </div>
+                <button 
+                  (click)="togglePasswordForm()" 
+                  class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {{ showPasswordForm ? 'Cancel' : 'Change' }}
+                </button>
               </div>
-              <button class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                Change
-              </button>
+              
+              <!-- Password Change Form -->
+              <div *ngIf="showPasswordForm" class="mt-4 p-4 border rounded-lg bg-muted/30">
+                <form (ngSubmit)="changePassword()" #passwordForm="ngForm">
+                  <div class="space-y-4">
+                    <!-- Current Password -->
+                    <div class="space-y-2">
+                      <label class="text-sm font-medium">Current Password</label>
+                      <div class="relative">
+                        <input
+                          [type]="showCurrentPassword ? 'text' : 'password'"
+                          [(ngModel)]="passwordData.currentPassword"
+                          name="currentPassword"
+                          required
+                          class="w-full px-3 py-2 pr-10 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                          placeholder="Enter current password"
+                        />
+                        <button
+                          type="button"
+                          (click)="toggleCurrentPasswordVisibility()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <lucide-angular [img]="showCurrentPassword ? eyeOffIcon : eyeIcon" class="h-4 w-4"></lucide-angular>
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <!-- New Password -->
+                    <div class="space-y-2">
+                      <label class="text-sm font-medium">New Password</label>
+                      <div class="relative">
+                        <input
+                          [type]="showNewPassword ? 'text' : 'password'"
+                          [(ngModel)]="passwordData.newPassword"
+                          name="newPassword"
+                          required
+                          minlength="8"
+                          class="w-full px-3 py-2 pr-10 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                          placeholder="Enter new password"
+                        />
+                        <button
+                          type="button"
+                          (click)="toggleNewPasswordVisibility()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <lucide-angular [img]="showNewPassword ? eyeOffIcon : eyeIcon" class="h-4 w-4"></lucide-angular>
+                        </button>
+                      </div>
+                      <div class="text-xs text-muted-foreground">
+                        Password must be at least 8 characters long
+                      </div>
+                    </div>
+                    
+                    <!-- Confirm Password -->
+                    <div class="space-y-2">
+                      <label class="text-sm font-medium">Confirm New Password</label>
+                      <div class="relative">
+                        <input
+                          [type]="showConfirmPassword ? 'text' : 'password'"
+                          [(ngModel)]="passwordData.confirmPassword"
+                          name="confirmPassword"
+                          required
+                          class="w-full px-3 py-2 pr-10 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                          placeholder="Confirm new password"
+                          [class.border-red-500]="passwordData.newPassword && passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword"
+                        />
+                        <button
+                          type="button"
+                          (click)="toggleConfirmPasswordVisibility()"
+                          class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <lucide-angular [img]="showConfirmPassword ? eyeOffIcon : eyeIcon" class="h-4 w-4"></lucide-angular>
+                        </button>
+                      </div>
+                      <div *ngIf="passwordData.newPassword && passwordData.confirmPassword && passwordData.newPassword !== passwordData.confirmPassword" class="text-xs text-red-500">
+                        Passwords do not match
+                      </div>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-2 pt-4">
+                      <button
+                        type="button"
+                        (click)="togglePasswordForm()"
+                        class="inline-flex items-center space-x-2 px-4 py-2 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
+                      >
+                        <lucide-angular [img]="cancelIcon" class="h-4 w-4"></lucide-angular>
+                        <span>Cancel</span>
+                      </button>
+                      <button
+                        type="submit"
+                        [disabled]="!passwordForm.valid || passwordData.newPassword !== passwordData.confirmPassword || isChangingPassword"
+                        class="inline-flex items-center space-x-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <lucide-angular [img]="checkIcon" class="h-4 w-4"></lucide-angular>
+                        <span>{{ isChangingPassword ? 'Changing...' : 'Change Password' }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         </div>
@@ -102,7 +219,12 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle.compo
                 <p class="text-sm text-muted-foreground">{{ notification.description }}</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" [checked]="notification.enabled" class="sr-only peer" />
+                <input 
+                  type="checkbox" 
+                  [(ngModel)]="notification.enabled" 
+                  (change)="saveNotificationSettings()" 
+                  class="sr-only peer" 
+                />
                 <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
               </label>
             </div>
@@ -169,12 +291,37 @@ import { ThemeToggleComponent } from '../../shared/components/theme-toggle.compo
   `,
   styleUrl: './settings.component.scss'
 })
-export class SettingsComponent {
+export class SettingsComponent implements OnInit, OnDestroy {
+  currentUser: AuthUser | null = null;
+  private userSubscription: Subscription = new Subscription();
+  
+  profileData = {
+    name: '',
+    email: ''
+  };
+
+  // Password change form
+  showPasswordForm = false;
+  isChangingPassword = false;
+  showCurrentPassword = false;
+  showNewPassword = false;
+  showConfirmPassword = false;
+  
+  passwordData = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+
   userIcon = User;
   shieldIcon = Shield;
   bellIcon = Bell;
   paletteIcon = Palette;
   databaseIcon = Database;
+  eyeIcon = Eye;
+  eyeOffIcon = EyeOff;
+  checkIcon = Check;
+  cancelIcon = X;
 
   notificationSettings = [
     {
@@ -198,4 +345,120 @@ export class SettingsComponent {
       enabled: true
     }
   ];
+
+  constructor(private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.userSubscription = this.authService.currentUser$.subscribe(
+      user => {
+        this.currentUser = user;
+        if (user) {
+          this.profileData = {
+            name: user.name || '',
+            email: user.email || ''
+          };
+        }
+      }
+    );
+    
+    // Load saved notification settings
+    this.loadNotificationSettings();
+  }
+
+  ngOnDestroy(): void {
+    this.userSubscription.unsubscribe();
+  }
+
+  saveProfileSettings(): void {
+    if (this.currentUser) {
+      const updatedUser: AuthUser = {
+        ...this.currentUser,
+        name: this.profileData.name,
+        email: this.profileData.email
+      };
+      
+      this.authService.updateUser(updatedUser);
+      console.log('Profile settings saved successfully');
+    }
+  }
+
+  saveNotificationSettings(): void {
+    localStorage.setItem('notificationSettings', JSON.stringify(this.notificationSettings));
+    console.log('Notification settings saved successfully');
+  }
+
+  loadNotificationSettings(): void {
+    const saved = localStorage.getItem('notificationSettings');
+    if (saved) {
+      this.notificationSettings = JSON.parse(saved);
+    }
+  }
+
+  togglePasswordForm(): void {
+    this.showPasswordForm = !this.showPasswordForm;
+    if (!this.showPasswordForm) {
+      this.resetPasswordForm();
+    }
+  }
+
+  resetPasswordForm(): void {
+    this.passwordData = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+    this.showCurrentPassword = false;
+    this.showNewPassword = false;
+    this.showConfirmPassword = false;
+  }
+
+  toggleCurrentPasswordVisibility(): void {
+    this.showCurrentPassword = !this.showCurrentPassword;
+  }
+
+  toggleNewPasswordVisibility(): void {
+    this.showNewPassword = !this.showNewPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  changePassword(): void {
+    if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
+      console.error('Passwords do not match');
+      return;
+    }
+
+    if (this.passwordData.newPassword.length < 8) {
+      console.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    this.isChangingPassword = true;
+
+    // Use AuthService to change password
+    this.authService.changePassword(
+      this.passwordData.currentPassword,
+      this.passwordData.newPassword
+    ).then(() => {
+      // Success
+      console.log('Password changed successfully');
+      
+      // Reset form and close
+      this.resetPasswordForm();
+      this.showPasswordForm = false;
+      this.isChangingPassword = false;
+      
+      // Show success message
+      alert('Password changed successfully!');
+    }).catch((error) => {
+      // Handle error
+      console.error('Password change failed:', error.message);
+      this.isChangingPassword = false;
+      
+      // Show error message
+      alert('Password change failed: ' + error.message);
+    });
+  }
 }

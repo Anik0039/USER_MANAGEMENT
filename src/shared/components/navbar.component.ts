@@ -1,13 +1,15 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { LucideAngularModule, Menu, Search, Bell, User } from 'lucide-angular';
+import { Router } from '@angular/router';
+import { LucideAngularModule, Menu, Search, Bell, User, LogOut } from 'lucide-angular';
 import { ThemeToggleComponent } from './theme-toggle.component';
-import { ButtonComponent } from './button.component';
+import { AuthService, User as AuthUser } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, ThemeToggleComponent, ButtonComponent],
+  imports: [CommonModule, LucideAngularModule, ThemeToggleComponent],
   template: `
     <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div class="container flex h-16 items-center">
@@ -69,19 +71,29 @@ import { ButtonComponent } from './button.component';
               class="absolute right-0 mt-2 w-48 rounded-md border bg-popover p-1 shadow-md animate-in slide-in-from-top-2"
             >
               <div class="px-3 py-2 text-sm">
-                <p class="font-medium">John Doe</p>
-                <p class="text-muted-foreground">john&#64;example.com</p>
+                <p class="font-medium">{{ currentUser?.name || 'User' }}</p>
+                <p class="text-muted-foreground">{{ currentUser?.email || 'user@example.com' }}</p>
               </div>
               <div class="h-px bg-border my-1"></div>
-              <button class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground">
+              <button 
+                (click)="navigateToProfile()" 
+                class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+              >
                 Profile
               </button>
-              <button class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground">
+              <button 
+                (click)="navigateToSettings()" 
+                class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+              >
                 Settings
               </button>
               <div class="h-px bg-border my-1"></div>
-              <button class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground">
-                Logout
+              <button 
+                (click)="logout()" 
+                class="w-full rounded-sm px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center space-x-2"
+              >
+                <lucide-angular [img]="logoutIcon" class="h-4 w-4"></lucide-angular>
+                <span>Logout</span>
               </button>
             </div>
           </div>
@@ -91,22 +103,55 @@ import { ButtonComponent } from './button.component';
   `,
   styleUrl: './navbar.component.scss'
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   @Input() pageTitle = 'Dashboard';
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
   isUserMenuOpen = false;
+  currentUser: AuthUser | null = null;
+  private userSubscription: Subscription = new Subscription();
 
   menuIcon = Menu;
   searchIcon = Search;
   bellIcon = Bell;
   userIcon = User;
+  logoutIcon = LogOut;
+
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   toggleSidebar() {
     this.toggleSidebarEvent.emit();
   }
 
+  ngOnInit(): void {
+    this.userSubscription = this.authService.currentUser$.subscribe(
+      user => this.currentUser = user
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.userSubscription.unsubscribe();
+  }
+
   toggleUserMenu() {
     this.isUserMenuOpen = !this.isUserMenuOpen;
+  }
+
+  navigateToProfile(): void {
+    this.router.navigate(['/profile']);
+    this.isUserMenuOpen = false;
+  }
+
+  navigateToSettings(): void {
+    this.router.navigate(['/settings']);
+    this.isUserMenuOpen = false;
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.isUserMenuOpen = false;
   }
 }
