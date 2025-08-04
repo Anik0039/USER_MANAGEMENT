@@ -42,27 +42,27 @@ import { ButtonComponent } from '../../shared/components/button.component';
 
       <!-- Users table -->
       <div class="rounded-md border">
-        <div class="overflow-x-auto">
+        <div class="overflow-auto max-h-96" style="scrollbar-width: thin; scrollbar-color: #888 #f1f1f1;">
           <table class="w-full">
             <thead>
-              <tr class="border-b bg-muted/50">
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Picture</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">User ID</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">First Name</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Middle Name</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Last Name</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Date of Birth</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Contact No</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Address</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Role</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Joined</th>
-                <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Actions</th>
+              <tr class="border-b bg-gray-800 text-white sticky top-0 z-10">
+                <th class="h-12 px-4 text-left align-middle font-medium">Picture</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">User ID</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">First Name</th>
+                <!-- <th class="h-12 px-4 text-left align-middle font-medium">Middle Name</th> -->
+                <th class="h-12 px-4 text-left align-middle font-medium">Last Name</th>
+                <!-- <th class="h-12 px-4 text-left align-middle font-medium">Date of Birth</th> -->
+                <th class="h-12 px-4 text-left align-middle font-medium">Contact No</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">Email</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">Address</th>
+                <!-- <th class="h-12 px-4 text-left align-middle font-medium">Role</th> -->
+                <th class="h-12 px-4 text-left align-middle font-medium">Status</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">Joined</th>
+                <th class="h-12 px-4 text-left align-middle font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let user of users" class="border-b transition-colors hover:bg-muted/50">
+              <tr *ngFor="let user of paginatedUsers" class="border-b transition-colors hover:bg-muted/50">
                 <td class="p-4 align-middle">
                   <div class="flex items-center justify-center">
                     <img *ngIf="user.picture" [src]="user.picture" class="h-10 w-10 object-cover rounded-full" alt="Profile" />
@@ -71,17 +71,17 @@ import { ButtonComponent } from '../../shared/components/button.component';
                 </td>
                 <td class="p-4 align-middle">{{ user.userId || '-' }}</td>
                 <td class="p-4 align-middle">{{ user.firstName || '-' }}</td>
-                <td class="p-4 align-middle">{{ user.middleName || '-' }}</td>
+                <!-- <td class="p-4 align-middle">{{ user.middleName || '-' }}</td> -->
                 <td class="p-4 align-middle">{{ user.lastName || '-' }}</td>
-                <td class="p-4 align-middle">{{ user.dateOfBirth || '-' }}</td>
+                <!-- <td class="p-4 align-middle">{{ user.dateOfBirth || '-' }}</td> -->
                 <td class="p-4 align-middle">{{ user.contactNo || '-' }}</td>
                 <td class="p-4 align-middle text-muted-foreground">{{ user.email || '-' }}</td>
                 <td class="p-4 align-middle">{{ user.address || '-' }}</td>
-                <td class="p-4 align-middle">
+                <!-- <td class="p-4 align-middle">
                   <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [ngClass]="getRoleBadgeClass(user.role)">
                     {{ user.role || '-' }}
                   </span>
-                </td>
+                </td> -->
                 <td class="p-4 align-middle">
                   <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" [ngClass]="getStatusBadgeClass(user.status)">
                     {{ user.status || '-' }}
@@ -101,6 +101,38 @@ import { ButtonComponent } from '../../shared/components/button.component';
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Pagination Controls -->
+        <div class="flex items-center justify-between p-4 border-t bg-muted/30">
+          <div class="text-sm text-muted-foreground">
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, users.length) }} of {{ users.length }} users
+          </div>
+          <div class="flex items-center space-x-2">
+            <button 
+              (click)="previousPage()" 
+              [disabled]="currentPage === 1"
+              class="px-3 py-1 text-sm border rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            
+            <button 
+              *ngFor="let page of pageNumbers" 
+              (click)="goToPage(page)"
+              [class]="'px-3 py-1 text-sm border rounded hover:bg-accent ' + (currentPage === page ? 'bg-primary text-primary-foreground' : '')"
+            >
+              {{ page }}
+            </button>
+            
+            <button 
+              (click)="nextPage()" 
+              [disabled]="currentPage === totalPages"
+              class="px-3 py-1 text-sm border rounded hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -322,6 +354,7 @@ export class UsersComponent {
   closeIcon = X;
   uploadIcon = Upload;
   userIcon = User;
+  Math = Math; // Make Math available in template
 
   showUserForm = false;
   newUser = {
@@ -338,6 +371,11 @@ export class UsersComponent {
     role: '',
     status: 'Active'
   };
+
+  // Pagination properties
+  currentPage = 1;
+  itemsPerPage = 5;
+  totalPages = 0;
 
   users = [
     {
@@ -421,6 +459,47 @@ export class UsersComponent {
       joinedDate: 'Jan 5, 2024'
     }
   ];
+
+  constructor() {
+    this.updatePagination();
+  }
+
+  // Pagination methods
+  get paginatedUsers() {
+    const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+    const endIndex = startIndex + this.itemsPerPage;
+    return this.users.slice(startIndex, endIndex);
+  }
+
+  updatePagination() {
+    this.totalPages = Math.ceil(this.users.length / this.itemsPerPage);
+  }
+
+  goToPage(page: number) {
+    if (page >= 1 && page <= this.totalPages) {
+      this.currentPage = page;
+    }
+  }
+
+  previousPage() {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+    }
+  }
+
+  get pageNumbers(): number[] {
+    const pages = [];
+    for (let i = 1; i <= this.totalPages; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
 
   getRoleBadgeClass(role: string): string {
     switch (role) {
@@ -520,6 +599,7 @@ export class UsersComponent {
       };
 
       this.users.unshift(newUserEntry); // Add to beginning of array
+      this.updatePagination(); // Update pagination after adding user
       this.closeUserForm();
     }
   }
