@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Plus, Search, Filter, X, Upload, User } from 'lucide-angular';
+import { LucideAngularModule, Search, Filter, ChevronDown, Plus, Edit, Trash2, Eye } from 'lucide-angular';
+import { UserCountService } from '../../services/user-count.service';
 import { ButtonComponent } from '../../shared/components/button.component';
 
 @Component({
@@ -31,13 +32,102 @@ import { ButtonComponent } from '../../shared/components/button.component';
           <input
             type="search"
             placeholder="Search users..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearch()"
             class="h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </div>
-        <button class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-          <lucide-angular [img]="filterIcon" class="mr-2 h-4 w-4"></lucide-angular>
-          Filter
-        </button>
+        <div class="relative">
+          <button 
+            (click)="toggleFilterDropdown()"
+            class="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <lucide-angular [img]="filterIcon" class="mr-2 h-4 w-4"></lucide-angular>
+            Filter
+            <lucide-angular [img]="chevronDownIcon" class="ml-2 h-4 w-4"></lucide-angular>
+          </button>
+          
+          <!-- Filter Dropdown -->
+          <div *ngIf="showFilterDropdown" class="absolute right-0 mt-2 w-56 rounded-md border bg-background shadow-lg z-50">
+            <div class="p-4 space-y-4">
+              <!-- Status Filter -->
+              <div>
+                <label class="text-sm font-medium mb-2 block">Status</label>
+                <select 
+                  [(ngModel)]="selectedStatus"
+                  (change)="onFilterChange()"
+                  class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+              
+              <!-- Role Filter -->
+              <div>
+                <label class="text-sm font-medium mb-2 block">Role</label>
+                <select 
+                  [(ngModel)]="selectedRole"
+                  (change)="onFilterChange()"
+                  class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="">All Roles</option>
+                  <option value="Admin">Admin</option>
+                  <option value="Moderator">Moderator</option>
+                  <option value="User">User</option>
+                </select>
+              </div>
+              
+              <!-- Joined Date Filter -->
+              <div>
+                <label class="text-sm font-medium mb-2 block">Joined Date</label>
+                <div class="space-y-2">
+                  <select 
+                    [(ngModel)]="selectedJoinedMonth"
+                    (change)="onFilterChange()"
+                    class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">All Months</option>
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                  <select 
+                    [(ngModel)]="selectedJoinedYear"
+                    (change)="onFilterChange()"
+                    class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="">All Years</option>
+                    <option value="2024">2024</option>
+                    <option value="2023">2023</option>
+                    <option value="2022">2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Clear Filters -->
+              <button 
+                (click)="clearFilters()"
+                class="w-full px-3 py-2 text-sm border rounded-md hover:bg-accent"
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Users table -->
@@ -62,7 +152,7 @@ import { ButtonComponent } from '../../shared/components/button.component';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let user of paginatedUsers" class="border-b transition-colors hover:bg-muted/50">
+              <tr *ngFor="let user of paginatedFilteredUsers" class="border-b transition-colors hover:bg-muted/50">
                 <td class="p-4 align-middle">
                   <div class="flex items-center justify-center">
                     <img *ngIf="user.picture" [src]="user.picture" class="h-10 w-10 object-cover rounded-full" alt="Profile" />
@@ -90,11 +180,11 @@ import { ButtonComponent } from '../../shared/components/button.component';
                 <td class="p-4 align-middle text-muted-foreground">{{ user.joinedDate || '-' }}</td>
                 <td class="p-4 align-middle">
                   <div class="flex items-center space-x-2">
-                    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8">
-                      Edit
+                    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8" title="Edit user">
+                      <lucide-angular [img]="editIcon" class="h-4 w-4"></lucide-angular>
                     </button>
-                    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8 text-destructive">
-                      Delete
+                    <button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 hover:bg-accent hover:text-accent-foreground h-8 w-8 text-destructive" title="Delete user">
+                      <lucide-angular [img]="deleteIcon" class="h-4 w-4"></lucide-angular>
                     </button>
                   </div>
                 </td>
@@ -106,7 +196,7 @@ import { ButtonComponent } from '../../shared/components/button.component';
         <!-- Pagination Controls -->
         <div class="flex items-center justify-between p-4 border-t bg-muted/30">
           <div class="text-sm text-muted-foreground">
-            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, users.length) }} of {{ users.length }} users
+            Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ Math.min(currentPage * itemsPerPage, filteredUsers.length) }} of {{ filteredUsers.length }} users
           </div>
           <div class="flex items-center space-x-2">
             <button 
@@ -354,9 +444,21 @@ export class UsersComponent {
   closeIcon = X;
   uploadIcon = Upload;
   userIcon = User;
+  editIcon = Edit;
+  deleteIcon = Trash2;
+  chevronDownIcon = ChevronDown;
   Math = Math; // Make Math available in template
 
   showUserForm = false;
+  
+  // Search and filter properties
+  searchTerm = '';
+  selectedStatus = '';
+  selectedRole = '';
+  selectedJoinedMonth = '';
+  selectedJoinedYear = '';
+  showFilterDropdown = false;
+  filteredUsers: any[] = [];
   newUser = {
     picture: '',
     userId: '',
@@ -457,22 +559,93 @@ export class UsersComponent {
       role: 'User',
       status: 'Pending',
       joinedDate: 'Jan 5, 2024'
+    },
+    {
+      picture: '',
+      userId: 'frankm',
+      firstName: 'Frank',
+      middleName: '',
+      lastName: 'Miller',
+      dateOfBirth: '',
+      contactNo: '',
+      email: 'frank@example.com',
+      address: '',
+      initials: 'FM',
+      name: 'Frank Miller',
+      role: 'User',
+      status: 'Active',
+      joinedDate: 'Mar 20, 2023'
+    },
+    {
+      picture: '',
+      userId: 'gracet',
+      firstName: 'Grace',
+      middleName: '',
+      lastName: 'Taylor',
+      dateOfBirth: '',
+      contactNo: '',
+      email: 'grace@example.com',
+      address: '',
+      initials: 'GT',
+      name: 'Grace Taylor',
+      role: 'Moderator',
+      status: 'Active',
+      joinedDate: 'Jun 15, 2023'
+    },
+    {
+      picture: '',
+      userId: 'henryc',
+      firstName: 'Henry',
+      middleName: '',
+      lastName: 'Clark',
+      dateOfBirth: '',
+      contactNo: '',
+      email: 'henry@example.com',
+      address: '',
+      initials: 'HC',
+      name: 'Henry Clark',
+      role: 'User',
+      status: 'Active',
+      joinedDate: 'Sep 10, 2022'
+    },
+    {
+      picture: '',
+      userId: 'irener',
+      firstName: 'Irene',
+      middleName: '',
+      lastName: 'Rodriguez',
+      dateOfBirth: '',
+      contactNo: '',
+      email: 'irene@example.com',
+      address: '',
+      initials: 'IR',
+      name: 'Irene Rodriguez',
+      role: 'Admin',
+      status: 'Active',
+      joinedDate: 'Dec 5, 2022'
     }
   ];
 
-  constructor() {
+  constructor(private userCountService: UserCountService) {
+    this.filteredUsers = [...this.users];
     this.updatePagination();
+    // Update user count service with initial count
+    this.userCountService.updateUserCount(this.users.length);
   }
 
   // Pagination methods
-  get paginatedUsers() {
+  get paginatedFilteredUsers() {
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     const endIndex = startIndex + this.itemsPerPage;
-    return this.users.slice(startIndex, endIndex);
+    return this.filteredUsers.slice(startIndex, endIndex);
   }
 
   updatePagination() {
-    this.totalPages = Math.ceil(this.users.length / this.itemsPerPage);
+    this.totalPages = Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+    // Reset to first page if current page is beyond available pages
+    if (this.currentPage > this.totalPages && this.totalPages > 0) {
+      this.currentPage = 1;
+    }
   }
 
   goToPage(page: number) {
@@ -599,7 +772,10 @@ export class UsersComponent {
       };
 
       this.users.unshift(newUserEntry); // Add to beginning of array
+      this.applyFilters(); // Reapply filters to include new user
       this.updatePagination(); // Update pagination after adding user
+      // Update user count service with new count
+      this.userCountService.updateUserCount(this.users.length);
       this.closeUserForm();
     }
   }
@@ -611,5 +787,70 @@ export class UsersComponent {
              this.newUser.email &&
              this.newUser.role &&
              this.newUser.status);
+  }
+
+  // Search and filter methods
+  onSearch(): void {
+    this.applyFilters();
+  }
+
+  toggleFilterDropdown(): void {
+    this.showFilterDropdown = !this.showFilterDropdown;
+  }
+
+  onFilterChange(): void {
+    this.applyFilters();
+  }
+
+  clearFilters(): void {
+    this.searchTerm = '';
+    this.selectedStatus = '';
+    this.selectedRole = '';
+    this.selectedJoinedMonth = '';
+    this.selectedJoinedYear = '';
+    this.showFilterDropdown = false;
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    this.filteredUsers = this.users.filter(user => {
+      // Search filter
+      const searchMatch = !this.searchTerm || 
+        user.firstName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        user.email.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+        user.userId.toLowerCase().includes(this.searchTerm.toLowerCase());
+
+      // Status filter
+      const statusMatch = !this.selectedStatus || user.status === this.selectedStatus;
+
+      // Role filter
+      const roleMatch = !this.selectedRole || user.role === this.selectedRole;
+
+      // Joined date filter
+       let dateMatch = true;
+       if (this.selectedJoinedMonth || this.selectedJoinedYear) {
+         if (user.joinedDate) {
+           const joinedDate = new Date(user.joinedDate);
+           if (!isNaN(joinedDate.getTime())) { // Check if date is valid
+             const joinedMonth = joinedDate.getMonth() + 1; // getMonth() returns 0-11
+             const joinedYear = joinedDate.getFullYear();
+
+             const monthMatch = !this.selectedJoinedMonth || joinedMonth.toString() === this.selectedJoinedMonth;
+             const yearMatch = !this.selectedJoinedYear || joinedYear.toString() === this.selectedJoinedYear;
+             
+             dateMatch = monthMatch && yearMatch;
+           } else {
+             dateMatch = false; // Invalid date format
+           }
+         } else {
+           dateMatch = false; // If no joined date, exclude from filtered results when date filter is applied
+         }
+       }
+
+      return searchMatch && statusMatch && roleMatch && dateMatch;
+    });
+
+    this.updatePagination();
   }
 }

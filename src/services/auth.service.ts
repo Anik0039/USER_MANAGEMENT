@@ -26,6 +26,11 @@ export class AuthService {
   constructor(private router: Router) {
     // Check authentication status on service initialization
     this.checkAuthStatus();
+    
+    // Auto-login demo user if not authenticated (for demo purposes)
+    if (!this.hasToken()) {
+      this.autoLoginDemoUser();
+    }
   }
 
   private hasToken(): boolean {
@@ -143,5 +148,28 @@ export class AuthService {
         resolve(true);
       }, 1500);
     });
+  }
+
+  private autoLoginDemoUser(): void {
+    // Auto-login with demo user for demonstration purposes
+    const demoUser: User = {
+      userId: 'admin001',
+      name: 'Sarah Johnson',
+      email: 'sarah.johnson@company.com',
+      phone: '+1 (555) 987-6543',
+      location: 'San Francisco, CA',
+      role: 'Administrator',
+      status: 'Active',
+      joinDate: new Date('2022-03-10')
+    };
+
+    // Store authentication data
+    localStorage.setItem('isAuthenticated', 'true');
+    localStorage.setItem('userInfo', JSON.stringify(demoUser));
+    localStorage.setItem('userPassword', 'admin123');
+
+    // Update subjects
+    this.isAuthenticatedSubject.next(true);
+    this.currentUserSubject.next(demoUser);
   }
 }

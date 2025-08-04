@@ -12,7 +12,7 @@ import { Subscription } from 'rxjs';
   imports: [CommonModule, LucideAngularModule, ThemeToggleComponent],
   template: `
     <header class="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div class="container flex h-16 items-center">
+      <div class="w-full flex h-16 items-center px-4 lg:px-6">
         <!-- Sidebar toggle button -->
         <button
           class="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
@@ -30,8 +30,8 @@ import { Subscription } from 'rxjs';
         <!-- Spacer -->
         <div class="flex-1"></div>
 
-        <!-- Search -->
-        <div class="flex items-center space-x-4">
+        <!-- Right Section -->
+        <div class="flex items-center space-x-4 ml-auto flex-shrink-0">
           <div class="relative hidden md:block">
             <lucide-angular [img]="searchIcon" class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"></lucide-angular>
             <input

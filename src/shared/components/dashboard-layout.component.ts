@@ -17,7 +17,10 @@ import { NavbarComponent } from './navbar.component';
       ></app-sidebar>
 
       <!-- Main content area -->
-      <div class="lg:pl-64">
+      <div [ngClass]="{
+        'lg:pl-72': isSidebarOpen,
+        'lg:pl-0': !isSidebarOpen
+      }" class="transition-all duration-300 ease-in-out">
         <!-- Navbar -->
         <app-navbar 
           [pageTitle]="currentPageTitle"
@@ -26,7 +29,10 @@ import { NavbarComponent } from './navbar.component';
 
         <!-- Page content -->
         <main class="py-6">
-          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div [ngClass]="{
+            'mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 lg:ml-4': isSidebarOpen,
+            'mx-auto max-w-4xl px-4 sm:px-6 lg:px-8': !isSidebarOpen
+          }" class="transition-all duration-300 ease-in-out">
             <router-outlet></router-outlet>
           </div>
         </main>
