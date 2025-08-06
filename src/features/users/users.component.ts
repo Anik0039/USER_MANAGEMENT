@@ -4,6 +4,23 @@ import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Plus, Search, Filter, X, Upload, User, Edit, Trash2, ChevronDown } from 'lucide-angular';
 import { ButtonComponent } from '../../shared/components/button.component';
 
+export interface User {
+  picture: string;
+  userId: string;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  dateOfBirth: string;
+  contactNo: string;
+  email: string;
+  address: string;
+  initials: string;
+  name: string;
+  role: string;
+  status: string;
+  joinedDate: string;
+}
+
 @Component({
   selector: 'app-users',
   standalone: true,
@@ -51,8 +68,9 @@ import { ButtonComponent } from '../../shared/components/button.component';
             <div class="p-4 space-y-4">
               <!-- Status Filter -->
               <div>
-                <label class="text-sm font-medium mb-2 block">Status</label>
+                <label class="text-sm font-medium mb-2 block" for="filterStatus">Status</label>
                 <select 
+                  id="filterStatus"
                   [(ngModel)]="selectedStatus"
                   (change)="onFilterChange()"
                   class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -66,8 +84,9 @@ import { ButtonComponent } from '../../shared/components/button.component';
               
               <!-- Role Filter -->
               <div>
-                <label class="text-sm font-medium mb-2 block">Role</label>
+                <label class="text-sm font-medium mb-2 block" for="filterRole">Role</label>
                 <select 
+                  id="filterRole"
                   [(ngModel)]="selectedRole"
                   (change)="onFilterChange()"
                   class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -81,9 +100,10 @@ import { ButtonComponent } from '../../shared/components/button.component';
               
               <!-- Joined Date Filter -->
               <div>
-                <label class="text-sm font-medium mb-2 block">Joined Date</label>
+                <label class="text-sm font-medium mb-2 block" for="joinedMonth">Joined Date</label>
                 <div class="space-y-2">
                   <select 
+                    id="joinedMonth"
                     [(ngModel)]="selectedJoinedMonth"
                     (change)="onFilterChange()"
                     class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -103,6 +123,7 @@ import { ButtonComponent } from '../../shared/components/button.component';
                     <option value="12">December</option>
                   </select>
                   <select 
+                    id="joinedYear"
                     [(ngModel)]="selectedJoinedYear"
                     (change)="onFilterChange()"
                     class="w-full h-9 rounded-md border border-input bg-background px-3 text-sm"
@@ -440,12 +461,13 @@ export class UsersComponent {
   plusIcon = Plus;
   searchIcon = Search;
   filterIcon = Filter;
-  closeIcon = X;
+  filteredUsers: User[] = [];
   uploadIcon = Upload;
   userIcon = User;
   editIcon = Edit;
   deleteIcon = Trash2;
   chevronDownIcon = ChevronDown;
+  closeIcon = X;
   Math = Math; // Make Math available in template
 
   showUserForm = false;
@@ -457,7 +479,6 @@ export class UsersComponent {
   selectedJoinedMonth = '';
   selectedJoinedYear = '';
   showFilterDropdown = false;
-  filteredUsers: any[] = [];
   newUser = {
     picture: '',
     userId: '',
