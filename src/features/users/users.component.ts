@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Search, Filter, ChevronDown, Plus, Edit, Trash2, Eye } from 'lucide-angular';
-import { UserCountService } from '../../services/user-count.service';
+import { LucideAngularModule, Plus, Search, Filter, X, Upload, User, Edit, Trash2, ChevronDown } from 'lucide-angular';
 import { ButtonComponent } from '../../shared/components/button.component';
 
 @Component({
@@ -626,11 +625,9 @@ export class UsersComponent {
     }
   ];
 
-  constructor(private userCountService: UserCountService) {
+  constructor() {
     this.filteredUsers = [...this.users];
     this.updatePagination();
-    // Update user count service with initial count
-    this.userCountService.updateUserCount(this.users.length);
   }
 
   // Pagination methods
@@ -774,8 +771,6 @@ export class UsersComponent {
       this.users.unshift(newUserEntry); // Add to beginning of array
       this.applyFilters(); // Reapply filters to include new user
       this.updatePagination(); // Update pagination after adding user
-      // Update user count service with new count
-      this.userCountService.updateUserCount(this.users.length);
       this.closeUserForm();
     }
   }

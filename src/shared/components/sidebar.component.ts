@@ -1,9 +1,7 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule, Menu, Home, Users, Settings, BarChart3, FileText, LogOut } from 'lucide-angular';
-import { UserCountService } from '../../services/user-count.service';
-import { Subscription } from 'rxjs';
 
 export interface SidebarItem {
   title: string;
@@ -85,58 +83,40 @@ export interface SidebarItem {
   `,
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent implements OnInit, OnDestroy {
+export class SidebarComponent {
   @Input() isOpen = false;
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
   logOutIcon = LogOut;
-  userCount = 0;
-  private userCountSubscription?: Subscription;
 
-  constructor(private userCountService: UserCountService) {}
-
-  ngOnInit() {
-    this.userCountSubscription = this.userCountService.userCount$.subscribe(count => {
-      this.userCount = count;
-    });
-  }
-
-  ngOnDestroy() {
-    if (this.userCountSubscription) {
-      this.userCountSubscription.unsubscribe();
+  navigationItems: SidebarItem[] = [
+    {
+      title: 'Dashboard',
+      icon: Home,
+      href: '/dashboard'
+    },
+    {
+      title: 'Users',
+      icon: Users,
+      href: '/users',
+      badge: '12'
+    },
+    {
+      title: 'Analytics',
+      icon: BarChart3,
+      href: '/analytics'
+    },
+    {
+      title: 'Reports',
+      icon: FileText,
+      href: '/reports'
+    },
+    {
+      title: 'Settings',
+      icon: Settings,
+      href: '/settings'
     }
-  }
-
-  get navigationItems(): SidebarItem[] {
-    return [
-      {
-        title: 'Dashboard',
-        icon: Home,
-        href: '/dashboard'
-      },
-      {
-        title: 'Users',
-        icon: Users,
-        href: '/users',
-        badge: this.userCount.toString()
-      },
-      {
-        title: 'Analytics',
-        icon: BarChart3,
-        href: '/analytics'
-      },
-      {
-        title: 'Reports',
-        icon: FileText,
-        href: '/reports'
-      },
-      {
-        title: 'Settings',
-        icon: Settings,
-        href: '/settings'
-      }
-    ];
-  }
+  ];
 
   get sidebarClasses() {
     return 'w-64 bg-background border-r border-border';
