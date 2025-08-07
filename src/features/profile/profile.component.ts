@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, User, Mail, Phone, MapPin, Calendar, Edit, Save, X } from 'lucide-angular';
@@ -65,11 +65,12 @@ import { Subscription } from 'rxjs';
                 
                 <!-- Full Name -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">
+                  <label for="profile-name" class="block text-sm font-medium text-foreground mb-2">
                     <lucide-angular [img]="userIcon" class="inline h-4 w-4 mr-2"></lucide-angular>
                     Full Name
                   </label>
                   <input
+                    id="profile-name"
                     type="text"
                     [(ngModel)]="profileData.name"
                     name="name"
@@ -81,11 +82,12 @@ import { Subscription } from 'rxjs';
 
                 <!-- Email -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">
+                  <label for="profile-email" class="block text-sm font-medium text-foreground mb-2">
                     <lucide-angular [img]="mailIcon" class="inline h-4 w-4 mr-2"></lucide-angular>
                     Email Address
                   </label>
                   <input
+                    id="profile-email"
                     type="email"
                     [(ngModel)]="profileData.email"
                     name="email"
@@ -97,11 +99,12 @@ import { Subscription } from 'rxjs';
 
                 <!-- Phone -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">
+                  <label for="profile-phone" class="block text-sm font-medium text-foreground mb-2">
                     <lucide-angular [img]="phoneIcon" class="inline h-4 w-4 mr-2"></lucide-angular>
                     Phone Number
                   </label>
                   <input
+                    id="profile-phone"
                     type="tel"
                     [(ngModel)]="profileData.phone"
                     name="phone"
@@ -113,11 +116,12 @@ import { Subscription } from 'rxjs';
 
                 <!-- Location -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">
+                  <label for="profile-location" class="block text-sm font-medium text-foreground mb-2">
                     <lucide-angular [img]="locationIcon" class="inline h-4 w-4 mr-2"></lucide-angular>
                     Location
                   </label>
                   <input
+                    id="profile-location"
                     type="text"
                     [(ngModel)]="profileData.location"
                     name="location"
@@ -134,8 +138,9 @@ import { Subscription } from 'rxjs';
                 
                 <!-- User ID -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">User ID</label>
+                  <label for="profile-user-id" class="block text-sm font-medium text-foreground mb-2">User ID</label>
                   <input
+                    id="profile-user-id"
                     type="text"
                     [value]="currentUser?.userId || 'N/A'"
                     readonly
@@ -145,8 +150,9 @@ import { Subscription } from 'rxjs';
 
                 <!-- Role -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">Role</label>
+                  <label for="profile-role" class="block text-sm font-medium text-foreground mb-2">Role</label>
                   <input
+                    id="profile-role"
                     type="text"
                     [value]="currentUser?.role || 'User'"
                     readonly
@@ -156,11 +162,12 @@ import { Subscription } from 'rxjs';
 
                 <!-- Join Date -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">
+                  <label for="profile-member-since" class="block text-sm font-medium text-foreground mb-2">
                     <lucide-angular [img]="calendarIcon" class="inline h-4 w-4 mr-2"></lucide-angular>
                     Member Since
                   </label>
                   <input
+                    id="profile-member-since"
                     type="text"
                     [value]="formatDate(currentUser?.joinDate)"
                     readonly
@@ -170,7 +177,7 @@ import { Subscription } from 'rxjs';
 
                 <!-- Account Status -->
                 <div>
-                  <label class="block text-sm font-medium text-foreground mb-2">Account Status</label>
+                  <span class="block text-sm font-medium text-foreground mb-2">Account Status</span>
                   <div class="flex items-center space-x-2">
                     <div class="h-3 w-3 rounded-full bg-green-500"></div>
                     <span class="text-sm text-foreground">{{ currentUser?.status || 'Active' }}</span>
@@ -248,6 +255,8 @@ import { Subscription } from 'rxjs';
   styleUrl: './profile.component.scss'
 })
 export class ProfileComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+
   currentUser: AuthUser | null = null;
   isEditMode = false;
   private userSubscription: Subscription = new Subscription();
@@ -275,7 +284,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   saveIcon = Save;
   cancelIcon = X;
 
-  constructor(private authService: AuthService) {}
+  constructor() {}
 
   ngOnInit(): void {
     this.userSubscription = this.authService.currentUser$.subscribe(

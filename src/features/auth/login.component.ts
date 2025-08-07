@@ -1,9 +1,10 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { LucideAngularModule, User, Eye, EyeOff } from 'lucide-angular';
 import { AuthService } from '../../services/auth.service';
+import { SSOService, SSOProvider } from '../../services/sso.service';
 
 @Component({
   selector: 'app-login',
@@ -113,13 +114,59 @@ import { AuthService } from '../../services/auth.service';
               {{ errorMessage }}
             </div>
           </form>
+
+          <!-- Divider -->
+          <div class="mt-6">
+            <div class="relative">
+              <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300"></div>
+              </div>
+              <div class="relative flex justify-center text-sm">
+                <span class="px-2 bg-white text-gray-500">Or continue with</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SSO Login Options -->
+          <div class="mt-6 space-y-3">
+            <button
+              *ngFor="let provider of ssoProviders"
+              (click)="loginWithSSO(provider.id)"
+              [disabled]="ssoLoading[provider.id]"
+              class="w-full flex justify-center items-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <span *ngIf="!ssoLoading[provider.id]" class="flex items-center">
+                <svg class="w-5 h-5 mr-3" [style.color]="provider.color" viewBox="0 0 24 24" fill="currentColor">
+                  <path [attr.d]="provider.icon"></path>
+                </svg>
+                Continue with {{ provider.name }}
+              </span>
+              <span *ngIf="ssoLoading[provider.id]" class="flex items-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Connecting to {{ provider.name }}...
+              </span>
+            </button>
+          </div>
+
+          <!-- Demo Credentials Info -->
+          <div class="mt-6 p-4 bg-blue-50 rounded-md">
+            <div class="text-sm text-blue-800">
+              <p class="font-medium mb-2">Demo Credentials:</p>
+              <p>Username: <span class="font-mono">admin</span></p>
+              <p>Password: <span class="font-mono">admin123</span></p>
+              <p class="mt-2 text-xs text-blue-600">Or use any SSO provider above for demo purposes</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `,
   styleUrl: './login.component.scss'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   credentials = {
     userId: '',
     password: ''
@@ -136,6 +183,14 @@ export class LoginComponent {
 
   private router = inject(Router);
   private authService = inject(AuthService);
+  private ssoService = inject(SSOService);
+
+  ssoProviders: SSOProvider[] = [];
+  ssoLoading: { [key: string]: boolean } = {};
+
+  ngOnInit(): void {
+    this.ssoProviders = this.ssoService.getSSOProviders();
+  }
 
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
@@ -165,5 +220,25 @@ export class LoginComponent {
           this.isLoading = false;
         }
       });
+  }
+
+  loginWithSSO(providerId: string): void {
+    this.ssoLoading[providerId] = true;
+    this.errorMessage = '';
+
+    this.authService.loginWithSSO(providerId).subscribe({
+      next: (success) => {
+        if (success) {
+          this.router.navigate(['/dashboard']);
+        } else {
+          this.errorMessage = `SSO login with ${providerId} failed. Please try again.`;
+        }
+        this.ssoLoading[providerId] = false;
+      },
+      error: () => {
+        this.errorMessage = `SSO login with ${providerId} failed. Please try again.`;
+        this.ssoLoading[providerId] = false;
+      }
+    });
   }
 }

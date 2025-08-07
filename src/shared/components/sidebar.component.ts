@@ -1,11 +1,13 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { LucideAngularModule, Menu, Home, Users, Settings, BarChart3, FileText, LogOut } from 'lucide-angular';
+import { LucideAngularModule, Home, Users, Settings, BarChart3, FileText, LogOut, LucideIconData } from 'lucide-angular';
+import { UserCountService } from '../../services/user-count.service';
+import { Subscription } from 'rxjs';
 
 export interface SidebarItem {
   title: string;
-  icon: any;
+  icon: LucideIconData;
   href: string;
   badge?: string;
 }
@@ -79,15 +81,21 @@ export interface SidebarItem {
       *ngIf="isOpen" 
       class="fixed inset-0 z-30 bg-black/50 lg:hidden"
       (click)="toggleSidebar()"
+      (keydown.escape)="toggleSidebar()"
+      tabindex="0"
+      role="button"
+      aria-label="Close sidebar"
     ></div>
   `,
   styleUrl: './sidebar.component.scss'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   @Input() isOpen = false;
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
+  private userCountSubscription?: Subscription;
   logOutIcon = LogOut;
+  userCount = 0;
 
   navigationItems: SidebarItem[] = [
     {
@@ -99,7 +107,7 @@ export class SidebarComponent {
       title: 'Users',
       icon: Users,
       href: '/users',
-      badge: '12'
+      badge: this.userCount.toString()
     },
     {
       title: 'Analytics',
@@ -117,6 +125,25 @@ export class SidebarComponent {
       href: '/settings'
     }
   ];
+
+  constructor(private userCountService: UserCountService) {}
+
+  ngOnInit() {
+    this.userCountSubscription = this.userCountService.userCount$.subscribe((count: number) => {
+      this.userCount = count;
+      // Update the Users navigation item badge
+      const usersItem = this.navigationItems.find(item => item.title === 'Users');
+      if (usersItem) {
+        usersItem.badge = count.toString();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.userCountSubscription) {
+      this.userCountSubscription.unsubscribe();
+    }
+  }
 
   get sidebarClasses() {
     return 'w-64 bg-background border-r border-border';

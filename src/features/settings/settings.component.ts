@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Settings, User, Shield, Bell, Palette, Database, Eye, EyeOff, Check, X } from 'lucide-angular';
+import { LucideAngularModule, User, Shield, Bell, Palette, Database, Eye, EyeOff, Check, X } from 'lucide-angular';
 import { ButtonComponent } from '../../shared/components/button.component';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle.component';
 import { AuthService, User as AuthUser } from '../../services/auth.service';
@@ -37,16 +37,18 @@ import { Subscription } from 'rxjs';
           
           <div class="grid gap-4 md:grid-cols-2">
             <div class="space-y-2">
-              <label class="text-sm font-medium">Full Name</label>
+              <label for="settings-name" class="text-sm font-medium">Full Name</label>
               <input 
+                id="settings-name"
                 type="text" 
                 [(ngModel)]="profileData.name" 
                 class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" 
               />
             </div>
             <div class="space-y-2">
-              <label class="text-sm font-medium">Email</label>
+              <label for="settings-email" class="text-sm font-medium">Email</label>
               <input 
+                id="settings-email"
                 type="email" 
                 [(ngModel)]="profileData.email" 
                 class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" 
@@ -102,9 +104,10 @@ import { Subscription } from 'rxjs';
                   <div class="space-y-4">
                     <!-- Current Password -->
                     <div class="space-y-2">
-                      <label class="text-sm font-medium">Current Password</label>
+                      <label for="current-password" class="text-sm font-medium">Current Password</label>
                       <div class="relative">
                         <input
+                          id="current-password"
                           [type]="showCurrentPassword ? 'text' : 'password'"
                           [(ngModel)]="passwordData.currentPassword"
                           name="currentPassword"
@@ -124,9 +127,10 @@ import { Subscription } from 'rxjs';
                     
                     <!-- New Password -->
                     <div class="space-y-2">
-                      <label class="text-sm font-medium">New Password</label>
+                      <label for="new-password" class="text-sm font-medium">New Password</label>
                       <div class="relative">
                         <input
+                          id="new-password"
                           [type]="showNewPassword ? 'text' : 'password'"
                           [(ngModel)]="passwordData.newPassword"
                           name="newPassword"
@@ -150,9 +154,10 @@ import { Subscription } from 'rxjs';
                     
                     <!-- Confirm Password -->
                     <div class="space-y-2">
-                      <label class="text-sm font-medium">Confirm New Password</label>
+                      <label for="confirm-password" class="text-sm font-medium">Confirm New Password</label>
                       <div class="relative">
                         <input
+                          id="confirm-password"
                           [type]="showConfirmPassword ? 'text' : 'password'"
                           [(ngModel)]="passwordData.confirmPassword"
                           name="confirmPassword"
@@ -213,13 +218,14 @@ import { Subscription } from 'rxjs';
           </div>
           
           <div class="space-y-4">
-            <div *ngFor="let notification of notificationSettings" class="flex items-center justify-between">
+            <div *ngFor="let notification of notificationSettings; let i = index" class="flex items-center justify-between">
               <div>
                 <h4 class="font-medium">{{ notification.title }}</h4>
                 <p class="text-sm text-muted-foreground">{{ notification.description }}</p>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer">
+              <label [for]="'notification-' + i" class="relative inline-flex items-center cursor-pointer">
                 <input 
+                  [id]="'notification-' + i"
                   type="checkbox" 
                   [(ngModel)]="notification.enabled" 
                   (change)="saveNotificationSettings()" 
@@ -292,6 +298,8 @@ import { Subscription } from 'rxjs';
   styleUrl: './settings.component.scss'
 })
 export class SettingsComponent implements OnInit, OnDestroy {
+  private authService = inject(AuthService);
+
   currentUser: AuthUser | null = null;
   private userSubscription: Subscription = new Subscription();
   
@@ -346,7 +354,7 @@ export class SettingsComponent implements OnInit, OnDestroy {
     }
   ];
 
-  constructor(private authService: AuthService) {}
+  constructor() {}
 
   ngOnInit(): void {
     this.userSubscription = this.authService.currentUser$.subscribe(

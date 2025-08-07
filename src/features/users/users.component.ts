@@ -274,7 +274,7 @@ export interface User {
                   <lucide-angular *ngIf="!newUser.picture" [img]="userIcon" class="h-8 w-8 text-muted-foreground"></lucide-angular>
                 </div>
                 <input type="file" accept="image/*" (change)="onPictureSelected($event)" class="hidden" #fileInput />
-                <button class="inline-flex items-center px-3 py-2 text-sm border border-input rounded-md hover:bg-accent" (click)="fileInput.click()">
+                <button class="inline-flex items-center px-3 py-2 text-sm border border-input rounded-md hover:bg-accent" (click)="$any(fileInput).click()">
                   <lucide-angular [img]="uploadIcon" class="mr-2 h-4 w-4"></lucide-angular>
                   Upload Image
                 </button>
